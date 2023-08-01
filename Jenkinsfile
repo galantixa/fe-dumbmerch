@@ -5,6 +5,7 @@ def dir = "~/fe-dumbmerch"
 def server = "appserver@103.139.193.35"
 def imagename = "dumbmerch-fe"
 def dockerusername = "galantixa"
+def dockerpass = "dckr_pat_-uWxmibjWrkcl0syj8SQG2hOOJM"
 
 pipeline {
     agent any
@@ -48,6 +49,7 @@ pipeline {
                     sshagent(credentials: [cred]) {
                         sh """
                             ssh -o StrictHostKeyChecking=no -T ${server} << EOF
+                                docker login -u ${dockerusername} -p ${dockerpass}
                                 docker tag ${imagename}:latest ${dockerusername}/${imagename}:latest
                                 docker image push ${dockerusername}/${imagename}:latest
                                 exit
