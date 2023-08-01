@@ -1,4 +1,4 @@
-def branch = "staging"
+kdef branch = "staging"
 def repo = "git@github.com:galantixa/fe-dumbmerch.git"
 def cred = "monitor"
 def dir = "~/fe-dumbmerch"
@@ -50,7 +50,7 @@ pipeline {
                         sh """
                             ssh -o StrictHostKeyChecking=no -T ${server} << EOF
                                 docker login -u ${dockerusername} -p ${dockerpass}
-                                docker tag ${imagename}:latest ${dockerusername}/${imagename}:latest
+                                docker image tag ${imagename}:latest ${dockerusername}/${imagename}:latest
                                 docker image push ${dockerusername}/${imagename}:latest
                                 exit
                             EOF
@@ -77,3 +77,4 @@ pipeline {
         }
     }
 }
+
