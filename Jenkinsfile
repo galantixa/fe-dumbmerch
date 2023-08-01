@@ -1,4 +1,4 @@
-kdef branch = "staging"
+def branch = "staging"
 def repo = "git@github.com:galantixa/fe-dumbmerch.git"
 def cred = "monitor"
 def dir = "~/fe-dumbmerch"
@@ -57,8 +57,6 @@ pipeline {
                 }
             }
         }
-    
-
 
         stage('Running the image') {
             steps {
