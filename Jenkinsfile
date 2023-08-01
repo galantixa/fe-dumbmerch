@@ -1,21 +1,20 @@
 def branch = "staging"
 def repo = "git@github.com:galantixa/fe-dumbmerch.git"
-def cred = "monitor"
+def cred = "appserver"
 def dir = "~/fe-dumbmerch"
 def server = "appserver@103.139.193.35"
 def imagename = "dumbmerch-fe"
 def dockerusername = "galantixa"
-def dockerpass = "dckr_pat_-uWxmibjWrkcl0syj8SQG2hOOJM"
 
 pipeline {
     agent any
     stages {
-        stage('Repo pull') {
+        stage('Repository pull') {
             steps {
                 script {
-                    sshagent(credentials: [cred]) {
+                    sshagent(credentials: ['cred']) {
                         sh """
-                            ssh -o StrictHostKeyChecking=no -T ${server} << EOF
+                            ssh -o StrictHostKeyChecking=no ${server} << EOF
                                 cd ${dir}
                                 git checkout ${branch}
                                 git pull origin ${branch}
@@ -30,11 +29,29 @@ pipeline {
         stage('Image build') {
             steps {
                 script {
-                    sshagent(credentials: [cred]) {
+                    sshagent(credentials: ['cred']) {
                         sh """
-                            ssh -o StrictHostKeyChecking=no -T ${server} << EOF
+                            ssh -o StrictHostKeyChecking=no ${server} << EOF
                                 cd ${dir}
                                 docker build -t ${imagename}:latest .
+                                exit
+                            EOF
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Running the image in a container') {
+            steps {
+                script {
+                    sshagent(credentials: ['cred']) {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ${server} << EOF
+                                cd ${dir}
+                                docker container stop ${imagename} || true
+                                docker container rm ${imagename} || true
+                                docker run -d -p 3000:3000 --name="${imagename}" ${imagename}:latest
                                 exit
                             EOF
                         """
@@ -46,28 +63,12 @@ pipeline {
         stage('Image push') {
             steps {
                 script {
-                    sshagent(credentials: [cred]) {
+                    sshagent(credentials: ['cred']) {
                         sh """
-                            ssh -o StrictHostKeyChecking=no -T ${server} << EOF
-                                docker login -u ${dockerusername} -p ${dockerpass}
-                                docker image tag ${imagename}:latest ${dockerusername}/${imagename}:latest
+                            ssh -o StrictHostKeyChecking=no ${server} << EOF
+                                docker tag ${imagename}:latest ${dockerusername}/${imagename}:latest
                                 docker image push ${dockerusername}/${imagename}:latest
-                                exit
-                            EOF
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Running the image') {
-            steps {
-                script {
-                    sshagent(credentials: [cred]) {
-                        sh """
-                            ssh -o StrictHostKeyChecking=no -T ${server} << EOF
-                                cd ${dir}
-                                docker run -d -p 3000:3000 --name="${imagename}" ${imagename}:latest
+                                docker image rm ${dockerusername}/${imagename}:latest ${imagename}:latest
                                 exit
                             EOF
                         """
@@ -77,4 +78,3 @@ pipeline {
         }
     }
 }
-
