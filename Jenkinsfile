@@ -16,11 +16,10 @@ pipeline {
                     sshagent(credentials: [cred]) {
                         sh """
                             ssh -o StrictHostKeyChecking=no -T ${server} << EOF
-                                rm -rf ${dir}
-                                git clone ${repo}
+				git clone ${repo}
                                 cd ${dir}
-                                git checkout ${branch}
-                                git pull origin ${branch}
+                                git checkout ${branch} || true
+                                git pull origin ${branch} || true
                                 exit
                             EOF
                         """
