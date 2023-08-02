@@ -9,6 +9,18 @@ def dockerpass = "dckr_pat_-uWxmibjWrkcl0syj8SQG2hOOJM"
 
 pipeline {
     agent any
+
+    post {
+        always {
+            discordSend description: "Pipeline build", 
+                        footer: "Galantixa DevOps",
+                        link: env.BUILD_URL,
+                        result: currentBuild.resultIsBetterOrEqualTo('SUCCESS'),
+                        title: JOB_NAME,
+                        webhookURL: "https://discord.com/api/webhooks/1136155760070512710/HCt4LQL74vsufx7itH-tIz6JrsFVDqsuyUQzy7akT_pF4h_RKBJG7XcAJKeBiCKXOdWZ"
+        }
+    }
+
     stages {
         stage('Repo pull') {
             steps {
