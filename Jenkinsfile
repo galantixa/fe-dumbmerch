@@ -28,6 +28,7 @@ pipeline {
                     sshagent(credentials: [cred]) {
                         sh """
                             ssh -o StrictHostKeyChecking=no -T ${server} << EOF
+				rm -rf ${dir}
                                 git clone ${repo} || true
                                 cd ${dir}
                                 git checkout ${branch} || true
