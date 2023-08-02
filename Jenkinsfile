@@ -1,6 +1,6 @@
 def branch = "staging"
 def repo = "git@github.com:galantixa/fe-dumbmerch.git"
-def cred = "ssh-key"
+def cred = "pub-key"
 def dir = "~/fe-dumbmerch"
 def server = "appserver@103.139.193.35"
 def imagename = "dumbmerch-fe"
