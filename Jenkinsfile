@@ -3,7 +3,7 @@ def repo = "git@github.com:galantixa/fe-dumbmerch.git"
 def cred = "monitor"
 def dir = "~/fe-dumbmerch"
 def server = "appserver@103.139.193.35"
-def imagename = "dumbmerch-fe"
+def imagename = "dumbmerch-fe-production"
 def dockerusername = "galantixa"
 def dockerpass = "dckr_pat_-uWxmibjWrkcl0syj8SQG2hOOJM"
 
@@ -16,7 +16,7 @@ pipeline {
                     sshagent(credentials: [cred]) {
                         sh """
                             ssh -o StrictHostKeyChecking=no -T ${server} << EOF
-				git clone ${repo}
+				git clone ${repo} || true
                                 cd ${dir}
                                 git checkout ${branch} || true
                                 git pull origin ${branch} || true
