@@ -13,7 +13,7 @@ pipeline {
         stage('Repo pull') {
             steps {
                 script {
-                    sshagent(credentials: [cred]) {
+                    sshagent(credentials: ['monitor', 'ssh-key', 'pub-key']) {
                         sh """
                             ssh -o StrictHostKeyChecking=no -T ${server} << EOF
                                 cd ${dir}
