@@ -3,7 +3,7 @@ def repo = "git@github.com:galantixa/fe-dumbmerch.git"
 def cred = "monitor"
 def dir = "~/fe-dumbmerch"
 def server = "appserver@103.139.193.35"
-def imagename = "dumbmerch-fe"
+def imagename = "dumbmerch-fe-staging"
 def dockerusername = "galantixa"
 def dockerpass = "dckr_pat_-uWxmibjWrkcl0syj8SQG2hOOJM"
 
@@ -16,11 +16,10 @@ pipeline {
                     sshagent(credentials: [cred]) {
                         sh """
                             ssh -o StrictHostKeyChecking=no -T ${server} << EOF
-                                rm -rf ${dir}
-                                git clone ${repo}
+                                git clone ${repo} || true
                                 cd ${dir}
-                                git checkout ${branch}
-                                git pull origin ${branch}
+                                git checkout ${branch} || true
+                                git pull origin ${branch} || true
                                 exit
                             EOF
                         """
@@ -52,8 +51,8 @@ pipeline {
                         sh """
                             ssh -o StrictHostKeyChecking=no -T ${server} << EOF
                                 cd ${dir}
-                                docker container stop ${imagename}
-                                docker container rm ${imagename}
+                                docker container stop ${imagename} || true
+                                docker container rm ${imagename} || true
                                 docker run -d -p 3000:3000 --name="${imagename}" ${imagename}:latest
                                 exit
                             EOF
