@@ -9,7 +9,8 @@ def dockerpass = "dckr_pat_-uWxmibjWrkcl0syj8SQG2hOOJM"
 
 pipeline {
     agent any
-	post {
+
+    post {
         always {
             discordSend description: "Pipeline build", 
                         footer: "Galantixa DevOps",
