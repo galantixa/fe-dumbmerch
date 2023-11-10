@@ -1,92 +1,56 @@
-def branch = "production"
-def repo = "git@github.com:galantixa/fe-dumbmerch.git"
-def cred = "monitoring"
-def dir = "~/fe-dumbmerch"
-def server = "galantixa@35.240.192.107"
-def imagename = "dumbmerch-fe-production"
-def dockerusername = "galantixa"
-def dockerpass = "dckr_pat_-uWxmibjWrkcl0syj8SQG2hOOJM"
-
 pipeline {
     agent any
-        // post {
-        //     always {
-        //         discordSend description: 'Build Pipeline', footer: 'Galantixa DevOps', image: '', link: 'env.BUILD_URL', result: 'SUCCESS',scmWebUrl: '', thumbnail: '',
-        //         title: 'env.JOB_NAME', webhookURL: 'https://discord.com/api/webhooks/1136155760070512710/HCt4LQL74vsufx7itH-tIz6JrsFVDqsuyUQzy7akT_pF4h_RKBJG7XcAJKeBiCKXOdWZ'
-        //     }
-        // }
+
+    environment {
+        DOCKERUSERNAME = "galantixa"
+        DOCKER_IMAGE_NAME = 'production-dumbmerch-fe'
+        DOCKER_REGISTRY = 'https://registry.hub.docker.com/v2/' 
+    }
+
     stages {
-        stage('Repo pull') {
+        stage('Clone') {
             steps {
                 script {
-                    sshagent(credentials: [cred]) {
-                        sh """
-                            ssh -o StrictHostKeyChecking=no -T ${server} << EOF
-                                git clone ${repo}
-                                cd ${dir}
-                                git checkout ${branch}
-                                git pull origin ${branch}
-                                exit
-                            EOF
-                        """
+                    checkout scm
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                script {
+                    sh "docker build -t ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ."
+                }
+            }
+        }
+
+        stage('login') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'docker', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                    sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
                     }
                 }
             }
         }
 
-        stage('Image build') {
+        stage('push image') {
             steps {
                 script {
-                    sshagent(credentials: [cred]) {
-                        sh """
-                            ssh -o StrictHostKeyChecking=no -T ${server} << EOF
-                                cd ${dir}
-                                docker build -t ${imagename}:latest .
-                                exit
-                            EOF
-                        """
-                    }
+                    def imageTag = "${DOCKERUSERNAME}/${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
+                    sh "docker tag ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ${imageTag}"
+                    sh "docker push ${imageTag}"
+                    sh "docker rmi ${imageTag}"
+                    sh "docker rmi  ${DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} || true"
                 }
             }
         }
-
-        // stage('Running the image') {
-        //     steps {
-        //         script {
-        //             sshagent(credentials: [cred]) {
-        //                 sh """
-        //                     ssh -o StrictHostKeyChecking=no -T ${server} << EOF
-        //                         cd ${dir}
-        //                         docker container stop ${imagename} || true
-        //                         docker container rm ${imagename} || true
-        //                         docker run -d -p 3000:3000 --name="${imagename}" ${imagename}:latest
-        //                         exit
-        //                     EOF
-        //                 """
-        //             }
-        //         }
-        //     }
-        // }
-        
-        stage('Image push') {
+        stage('Update Manifest') {
             steps {
                 script {
-                    sshagent(credentials: [cred]) {
-                        sh """
-                            ssh -o StrictHostKeyChecking=no -T ${server} << EOF
-                                docker login -u ${dockerusername} -p ${dockerpass}
-                                docker image tag ${imagename}:latest ${dockerusername}/${imagename}:latest
-                                docker image push ${dockerusername}/${imagename}:latest
-                                docker image rm ${dockerusername}/${imagename}:latest
-                                docker images rm ${imagename} || true
-                                cd && rm -rf ${dir}
-                                exit
-                            EOF
-                        """
-                    }
+                    build job: 'fe-updatemanifest-v', parameters: [string(name: 'DOCKERTAGFE', value: env.BUILD_NUMBER)]
                 }
             }
         }
-    } 
+    }
 }
-
